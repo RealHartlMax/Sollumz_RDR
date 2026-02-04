@@ -448,7 +448,7 @@ def create_tinted_geometry_graph():  # move to blenderhelper.py?
     gnt.links.new(mathns[8].outputs[0], switch.inputs["False"])
 
     # create and link vector
-    comb = gnt.nodes.new("ShaderNodeCombineRGB")
+    comb = gnt.nodes.new("ShaderNodeCombineXYZ")
     gnt.links.new(switch.outputs[0], comb.inputs[0])
     gnt.links.new(pal_flip_uv_mult.outputs[0], comb.inputs[1])
     gnt.links.new(comb.outputs[0], cptn.inputs["Value"])
