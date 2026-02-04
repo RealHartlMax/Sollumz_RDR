@@ -197,6 +197,7 @@ class VertexBufferBuilder:
         materials: Optional[list[bpy.types.Material]] = None,
         char_cloth_xml: Optional[CharacterCloth] = None,
         bones: Optional[list[bpy.types.Bone]] = None,
+        use_bone_mapping: bool | None = None,
     ):
         self.mesh = mesh
         self.domain = domain
@@ -204,6 +205,7 @@ class VertexBufferBuilder:
 
         self._bone_by_vgroup = bone_by_vgroup
         self._has_weights = bone_by_vgroup is not None
+        self._use_bone_mapping = use_bone_mapping
 
         self._loop_to_vert_inds = np.empty(len(mesh.loops), dtype=np.uint32)
         self.mesh.loops.foreach_get("vertex_index", self._loop_to_vert_inds)
@@ -347,6 +349,7 @@ class VertexBufferBuilder:
         cloth_bind_verts = []
         ungrouped_verts = 0
 
+        use_bone_mapping = self._use_bone_mapping
         for i, vert in enumerate(self.mesh.vertices):
             groups = self._get_sorted_vertex_group_elements(vert)
             if not groups:
@@ -363,10 +366,16 @@ class VertexBufferBuilder:
                     if current_game() == SollumzGame.GTA:
                         ind_arr[i][j] = bone_by_vgroup[grp.group]
                     elif current_game() == SollumzGame.RDR:
-                        ind_arr[i][j] = grp.group
+                        if use_bone_mapping:
+                            ind_arr[i][j] = grp.group
+                        else:
+                            ind_arr[i][j] = bone_by_vgroup[grp.group]
                 elif current_game() == SollumzGame.RDR and j >= 4 and j < 8:
                     weights_arr[i][j] = grp.weight
-                    ind_arr[i][j] = grp.group
+                    if use_bone_mapping:
+                        ind_arr[i][j] = grp.group
+                    else:
+                        ind_arr[i][j] = bone_by_vgroup[grp.group]
                 else:
                     break
 

@@ -398,12 +398,17 @@ def create_geometries_xml(
 
     bones = armature_obj.data.bones if armature_obj is not None else None
     if current_game() == SollumzGame.GTA:
+        use_bone_mapping = None
         bone_by_vgroup = try_get_bone_by_vgroup(model_obj, armature_obj)
     elif current_game() == SollumzGame.RDR:
-        bone_by_vgroup = try_get_bone_tag_by_vgroup(model_obj, armature_obj)
+        use_bone_mapping = parent_obj is not None and parent_obj.sollum_type == SollumType.DRAWABLE_DICTIONARY
+        if use_bone_mapping:
+            bone_by_vgroup = try_get_bone_tag_by_vgroup(model_obj, armature_obj)
+        else:
+            bone_by_vgroup = try_get_bone_by_vgroup(model_obj, armature_obj)
 
     domain = VBBuilderDomain[get_export_settings().mesh_domain] if mesh_domain_override is None else mesh_domain_override
-    vb_builder = VertexBufferBuilder(mesh_eval, bone_by_vgroup, domain, materials, char_cloth_xml, bones)
+    vb_builder = VertexBufferBuilder(mesh_eval, bone_by_vgroup, domain, materials, char_cloth_xml, bones, use_bone_mapping)
     total_vert_buffer = vb_builder.build(current_game())
     if domain == VBBuilderDomain.VERTEX:
         # bit dirty to use private data of the builder class, but we need this array here and it is already computed
@@ -484,7 +489,7 @@ def create_geometries_xml(
                         semantic_format = semantic_format + str(semantic[2])
                         break
             if bone_by_vgroup is not None:
-                if parent_obj is not None and parent_obj.sollum_type == SollumType.DRAWABLE_DICTIONARY:
+                if use_bone_mapping:
                     geom_xml.bone_count = len(bone_by_vgroup)
                 else:
                     geom_xml.bone_count = len(bones)
